@@ -12,3 +12,7 @@ class SymbolNotFoundError(SourceError):
 
 class RateLimitError(SourceError):
     """Raised when an upstream data source rejects a request due to rate limiting."""
+
+
+class SourceUnavailableError(SourceError):
+    """Raised when an upstream data source is unreachable or returns no usable data."""

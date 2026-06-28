@@ -51,3 +51,25 @@ async def test_quote_history_async_returns_dataframe() -> None:
     df = await samvnstock.quote.history_async("VCB", start="2024-01-01", end="2024-01-01")
 
     assert df.iloc[0]["close"] == 10.5
+
+
+@respx.mock
+def test_listing_symbols_by_exchange_returns_dataframe() -> None:
+    raw = {"symbol": "VCB", "board": "HOSE", "type": "STOCK", "organName": "Vietcombank"}
+    respx.get(LISTING_ALL_URL).mock(return_value=Response(200, json=[raw]))
+
+    df = samvnstock.listing.symbols_by_exchange()
+
+    assert df.iloc[0]["symbol"] == "VCB"
+
+
+@respx.mock
+def test_quote_intraday_returns_dataframe() -> None:
+    from samvnstock.providers.vci.const import QUOTE_INTRADAY_URL
+
+    raw = {"data": [{"truncTime": 1704067200, "matchPrice": 10.5, "matchVol": 100}]}
+    respx.post(QUOTE_INTRADAY_URL).mock(return_value=Response(200, json=raw))
+
+    df = samvnstock.quote.intraday("VCB")
+
+    assert df.iloc[0]["price"] == 10.5

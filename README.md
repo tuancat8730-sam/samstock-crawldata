@@ -40,27 +40,44 @@ import samvnstock
 
 # Danh sách mã cổ phiếu (DataFrame)
 df_symbols = samvnstock.listing.all_symbols()
+df_all = samvnstock.listing.symbols_by_exchange()       # mọi loại tài sản, theo sàn
+df_groups = samvnstock.listing.symbols_by_group("VN30")  # list[str]
+df_icb = samvnstock.listing.industry()                   # mã phân ngành ICB
+df_icb_map = samvnstock.listing.symbols_by_industries()   # phân ngành theo từng mã
 
-# Lịch sử giá OHLCV theo ngày
+# Lịch sử giá OHLCV theo ngày (mặc định nguồn VCI, fallback "vnd" khi VCI bị chặn IP)
 df_quote = samvnstock.quote.history("VCB", start="2024-01-01", end="2024-06-30")
+df_quote_vnd = samvnstock.quote.history("VCB", start="2024-01-01", source="vnd")
 
-# Bản async tương đương
+# Khớp lệnh trong ngày (chỉ nguồn vci)
+df_intraday = samvnstock.quote.intraday("VCB")
+
+# Bản async tương đương cho mọi hàm trên, hậu tố "_async"
 df_symbols = await samvnstock.listing.all_symbols_async()
 df_quote = await samvnstock.quote.history_async("VCB", start="2024-01-01")
 ```
 
-Nguồn dữ liệu hiện hỗ trợ: `vci` (mặc định). Thêm nguồn mới bằng cách đăng ký
-provider qua `ProviderRegistry` — xem [CONTRIBUTING.md](./CONTRIBUTING.md).
+Nguồn dữ liệu hiện hỗ trợ: `vci` (mặc định, đầy đủ nhất), `vnd` (chỉ
+`Quote.history`, dùng làm dự phòng khi VCI bị chặn IP — ví dụ Google
+Colab/Kaggle). Thêm nguồn mới bằng cách đăng ký provider qua
+`ProviderRegistry` — xem [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Roadmap
 
-Xem chi tiết tại [KE-HOACH-XAY-REPO-CHUNG-KHOAN-VN.md](./KE-HOACH-XAY-REPO-CHUNG-KHOAN-VN.md).
+Xem chi tiết tại [KE-HOACH-XAY-REPO-CHUNG-KHOAN-VN.md](./KE-HOACH-XAY-REPO-CHUNG-KHOAN-VN.md)
+và [KE-HOACH-CRAWL-DATA-CHI-TIET-1.md](./KE-HOACH-CRAWL-DATA-CHI-TIET-1.md).
 
 - [x] v0.1 — Listing (`all_symbols`) + Quote lịch sử theo ngày (nguồn VCI, sync + async)
-- [ ] v0.2 — Quote intraday + price board
-- [ ] v0.3 — Company profile
-- [ ] v0.4 — Financial reports
-- [ ] v0.5+ — Chỉ số, phái sinh, quỹ/ETF, trái phiếu...
+- [x] v0.2 — Listing mở rộng (`industry`, `symbols_by_exchange`, `symbols_by_group`,
+      `symbols_by_industries`, nguồn VCI) + Quote `intraday` (VCI) + Quote `history`
+      nguồn `vnd` (dự phòng) + rate-limit cho `HttpClient`. **Không** gồm VND `all_symbols`,
+      VCI `price_depth`/`trading_stats`/`side_stats`, và các nguồn MAS/CafeF — các
+      endpoint này chỉ có trong tài liệu sản phẩm trả phí "Vnstock_data", không có
+      trong mã nguồn mở hay API công khai nào tôi xác minh được; cần thêm thông tin
+      trước khi triển khai để tránh code suy đoán không hoạt động thật.
+- [ ] v0.3 — Company profile (VCI) + `core/cache.py`
+- [ ] v0.4 — Finance (VCI: balance_sheet/income_statement/cashflow/ratio, long-format)
+- [ ] v0.5+ — Đa nguồn cho Finance/Quote, Trading, Market (tuỳ endpoint xác minh được)
 
 ## Giấy phép & Disclaimer
 

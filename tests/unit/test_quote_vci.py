@@ -2,7 +2,7 @@ import pytest
 import respx
 from httpx import Response
 
-from samvnstock.providers.vci.const import QUOTE_HISTORY_URL
+from samvnstock.providers.vci.const import QUOTE_HISTORY_URL, QUOTE_INTRADAY_URL
 from samvnstock.providers.vci.quote import VciQuoteProvider
 
 _RAW_RESPONSE = [
@@ -46,3 +46,32 @@ async def test_history_async_matches_sync_result() -> None:
 
     assert len(bars) == 2
     assert bars[0].open == 10.0
+
+
+_INTRADAY_RESPONSE = {
+    "data": [
+        {"truncTime": 1704067200, "matchPrice": 10.5, "matchVol": 100, "matchType": "B"},
+        {"truncTime": 1704067260, "matchPrice": 10.6, "matchVol": 200, "matchType": "S"},
+    ]
+}
+
+
+@respx.mock
+def test_intraday_parses_ticks() -> None:
+    respx.post(QUOTE_INTRADAY_URL).mock(return_value=Response(200, json=_INTRADAY_RESPONSE))
+
+    ticks = VciQuoteProvider().intraday("VCB")
+
+    assert len(ticks) == 2
+    assert ticks[0].price == 10.5
+    assert ticks[1].match_type == "S"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_intraday_async_matches_sync() -> None:
+    respx.post(QUOTE_INTRADAY_URL).mock(return_value=Response(200, json=_INTRADAY_RESPONSE))
+
+    ticks = await VciQuoteProvider().intraday_async("VCB")
+
+    assert len(ticks) == 2

@@ -1,6 +1,13 @@
 BASE_URL = "https://trading.vietcap.com.vn/api/"
+IQ_INSIGHT_URL = "https://iq.vietcap.com.vn/api/iq-insight-service"
+
 LISTING_ALL_URL = BASE_URL + "price/symbols/getAll"
+LISTING_BY_GROUP_URL = BASE_URL + "price/symbols/getByGroup"
+ICB_CODES_URL = IQ_INSIGHT_URL + "/v1/sectors/icb-codes"
+SYMBOLS_BY_INDUSTRIES_URL = IQ_INSIGHT_URL + "/v2/company/search-bar"
+
 QUOTE_HISTORY_URL = BASE_URL + "chart/OHLCChart/gap-chart"
+QUOTE_INTRADAY_URL = BASE_URL + "market-watch/LEData/getAll"
 
 # Required so VCI's edge doesn't reject the request as non-browser traffic.
 HEADERS = {
@@ -14,7 +21,27 @@ HEADERS = {
     ),
 }
 
-# v0.1 only supports daily bars; intraday intervals are planned for v0.2.
+# v0.1/v0.2 only support daily bars; minute/hour intervals are a future version.
 TIME_FRAME_DAY = "ONE_DAY"
 
 OHLC_FIELD_MAP = {"t": "time", "o": "open", "h": "high", "l": "low", "c": "close", "v": "volume"}
+
+INTRADAY_FIELD_MAP = {
+    "truncTime": "time",
+    "matchPrice": "price",
+    "matchVol": "volume",
+    "matchType": "match_type",
+}
+
+# Index/derivative group codes accepted by `price/symbols/getByGroup`.
+GROUP_CODES = {
+    "HOSE": "HOSE",
+    "HNX": "HNX",
+    "UPCOM": "UPCOM",
+    "VN30": "VN30",
+    "VN100": "VN100",
+    "HNX30": "HNX30",
+    "ETF": "ETF",
+    "CW": "CW",
+    "BOND": "BOND",
+}

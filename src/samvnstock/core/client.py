@@ -9,6 +9,36 @@ from samvnstock.core.exceptions import RateLimitError, SourceError
 _RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 
+class _RateLimiter:
+    """Simple fixed-interval rate limiter shared by sync and async call sites.
+
+    Not thread-safe; each `HttpClient` instance is expected to be used from a
+    single thread/coroutine at a time, matching how providers create clients.
+    """
+
+    def __init__(self, requests_per_second: float | None) -> None:
+        self._min_interval = 1.0 / requests_per_second if requests_per_second else 0.0
+        self._last_request_at: float | None = None
+
+    def wait(self) -> None:
+        delay = self._delay()
+        if delay > 0:
+            time.sleep(delay)
+        self._last_request_at = time.monotonic()
+
+    async def await_(self) -> None:
+        delay = self._delay()
+        if delay > 0:
+            await asyncio.sleep(delay)
+        self._last_request_at = time.monotonic()
+
+    def _delay(self) -> float:
+        if not self._min_interval or self._last_request_at is None:
+            return 0.0
+        elapsed = time.monotonic() - self._last_request_at
+        return max(0.0, self._min_interval - elapsed)
+
+
 class HttpClient:
     """Thin httpx wrapper with retry/backoff, shared by sync and async call sites.
 
@@ -24,11 +54,13 @@ class HttpClient:
         timeout: float = 10.0,
         max_retries: int = 3,
         backoff_factor: float = 0.5,
+        requests_per_second: float | None = None,
     ) -> None:
         self._headers = headers or {}
         self._timeout = timeout
         self._max_retries = max_retries
         self._backoff_factor = backoff_factor
+        self._rate_limiter = _RateLimiter(requests_per_second)
 
     def _raise_for_status(self, response: httpx.Response) -> None:
         if response.status_code == 429:
@@ -60,6 +92,7 @@ class HttpClient:
     def _request_with_retry(self, method: Any, url: str, **kwargs: Any) -> Any:
         last_error: Exception | None = None
         for attempt in range(self._max_retries):
+            self._rate_limiter.wait()
             try:
                 response = method(url, **kwargs)
             except httpx.TransportError as exc:
@@ -77,6 +110,7 @@ class HttpClient:
     async def _arequest_with_retry(self, method: Any, url: str, **kwargs: Any) -> Any:
         last_error: Exception | None = None
         for attempt in range(self._max_retries):
+            await self._rate_limiter.await_()
             try:
                 response = await method(url, **kwargs)
             except httpx.TransportError as exc:

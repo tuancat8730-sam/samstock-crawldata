@@ -3,16 +3,25 @@ from typing import Any
 
 from samvnstock.core.client import HttpClient
 from samvnstock.core.exceptions import SourceError
-from samvnstock.core.models import Bar
+from samvnstock.core.models import Bar, Tick
+from samvnstock.core.normalize import remap
 from samvnstock.providers.base import QuoteProvider
-from samvnstock.providers.vci.const import HEADERS, QUOTE_HISTORY_URL, TIME_FRAME_DAY
+from samvnstock.providers.vci.const import (
+    HEADERS,
+    INTRADAY_FIELD_MAP,
+    QUOTE_HISTORY_URL,
+    QUOTE_INTRADAY_URL,
+    TIME_FRAME_DAY,
+)
 from samvnstock.utils.datetime import count_business_days, end_of_day_timestamp, parse_date
 
 
 class VciQuoteProvider(QuoteProvider):
-    """Quote provider backed by VCI's `chart/OHLCChart/gap-chart` endpoint.
+    """Quote provider backed by VCI's `chart/OHLCChart/gap-chart` and
+    `market-watch/LEData/getAll` endpoints.
 
-    v0.1 only supports daily ("1D") bars; intraday support is planned for v0.2.
+    `history` only supports daily ("1D") bars; minute/hour intervals are a
+    future version.
     """
 
     def __init__(self, client: HttpClient | None = None) -> None:
@@ -30,6 +39,16 @@ class VciQuoteProvider(QuoteProvider):
         data = await self._client.apost(QUOTE_HISTORY_URL, json=payload)
         return self._parse(data, symbol)
 
+    def intraday(self, symbol: str, page_size: int = 100) -> list[Tick]:
+        payload = {"symbol": symbol, "limit": page_size, "truncTime": None}
+        data = self._client.post(QUOTE_INTRADAY_URL, json=payload)
+        return self._parse_intraday(data, symbol)
+
+    async def intraday_async(self, symbol: str, page_size: int = 100) -> list[Tick]:
+        payload = {"symbol": symbol, "limit": page_size, "truncTime": None}
+        data = await self._client.apost(QUOTE_INTRADAY_URL, json=payload)
+        return self._parse_intraday(data, symbol)
+
     def _build_payload(self, symbol: str, start: str, end: str | None) -> dict[str, Any]:
         start_dt = parse_date(start)
         end_dt = parse_date(end) if end else datetime.now()
@@ -40,6 +59,28 @@ class VciQuoteProvider(QuoteProvider):
             "to": end_of_day_timestamp(end_dt),
             "countBack": count_back,
         }
+
+    def _parse_intraday(self, data: Any, symbol: str) -> list[Tick]:
+        if isinstance(data, dict) and "data" in data:
+            data = data["data"]
+        if not isinstance(data, list):
+            raise SourceError(f"Không tìm thấy dữ liệu khớp lệnh cho {symbol}")
+
+        ticks = []
+        for raw in data:
+            row = remap(raw, INTRADAY_FIELD_MAP)
+            if "time" not in row or "price" not in row:
+                continue
+            ticks.append(
+                Tick(
+                    symbol=symbol,
+                    time=datetime.fromtimestamp(row["time"]),
+                    price=row["price"],
+                    volume=int(row.get("volume", 0)),
+                    match_type=row.get("match_type"),
+                )
+            )
+        return ticks
 
     def _parse(self, data: Any, symbol: str) -> list[Bar]:
         if isinstance(data, dict) and "data" in data:

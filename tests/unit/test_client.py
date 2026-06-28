@@ -1,3 +1,5 @@
+import time
+
 import pytest
 import respx
 from httpx import Response
@@ -45,3 +47,16 @@ async def test_aget_retries_on_5xx_then_succeeds() -> None:
 
     assert result == {"ok": True}
     assert route.call_count == 2
+
+
+@respx.mock
+def test_rate_limiter_spaces_out_consecutive_requests() -> None:
+    respx.get(_URL).mock(return_value=Response(200, json={"ok": True}))
+    client = HttpClient(backoff_factor=0, requests_per_second=20)
+
+    start = time.monotonic()
+    client.get(_URL)
+    client.get(_URL)
+    elapsed = time.monotonic() - start
+
+    assert elapsed >= 0.05
