@@ -55,3 +55,17 @@ def test_facade_can_select_vnd_source() -> None:
     df = samvnstock.quote.history("VCB", start="2024-01-01", end="2024-01-02", source="vnd")
 
     assert df.iloc[0]["close"] == 55.4
+
+
+@respx.mock
+def test_history_passes_resolution_for_each_interval() -> None:
+    route = respx.get(QUOTE_HISTORY_URL).mock(return_value=Response(200, json=_RAW_RESPONSE))
+
+    VndQuoteProvider().history("VCB", start="2024-01-01", interval="15m")
+
+    assert route.calls[0].request.url.params["resolution"] == "15"
+
+
+def test_history_rejects_unsupported_interval() -> None:
+    with pytest.raises(ValueError, match="không hỗ trợ interval"):
+        VndQuoteProvider().history("VCB", start="2024-01-01", interval="2H")

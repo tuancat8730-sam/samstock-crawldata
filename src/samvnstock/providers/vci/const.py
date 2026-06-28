@@ -32,7 +32,15 @@ HEADERS = {
     ),
 }
 
-# v0.1/v0.2 only support daily bars; minute/hour intervals are a future version.
+# `timeFrame` values natively supported by VCI's gap-chart endpoint without
+# client-side resampling. 5m/15m/30m would require resampling ONE_MINUTE bars
+# client-side (not implemented) — use source="vnd" for those, which VNDIRECT's
+# dchart-api supports natively.
+INTERVAL_TIME_FRAME_MAP = {
+    "1m": "ONE_MINUTE",
+    "1H": "ONE_HOUR",
+    "1D": "ONE_DAY",
+}
 TIME_FRAME_DAY = "ONE_DAY"
 
 OHLC_FIELD_MAP = {"t": "time", "o": "open", "h": "high", "l": "low", "c": "close", "v": "volume"}

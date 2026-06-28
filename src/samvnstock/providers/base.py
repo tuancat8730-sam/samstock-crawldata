@@ -64,11 +64,13 @@ class QuoteProvider(ABC):
     """
 
     @abstractmethod
-    def history(self, symbol: str, start: str, end: str | None = None) -> list[Bar]: ...
+    def history(
+        self, symbol: str, start: str, end: str | None = None, interval: str = "1D"
+    ) -> list[Bar]: ...
 
     @abstractmethod
     async def history_async(
-        self, symbol: str, start: str, end: str | None = None
+        self, symbol: str, start: str, end: str | None = None, interval: str = "1D"
     ) -> list[Bar]: ...
 
     def intraday(self, symbol: str, page_size: int = 100) -> list[Tick]:

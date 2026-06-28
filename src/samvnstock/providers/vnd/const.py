@@ -16,3 +16,16 @@ HEADERS = {
 }
 
 RESOLUTION_DAY = "D"
+
+# `resolution` values natively supported by dchart-api (confirmed via the
+# `/dchart/symbols` metadata endpoint: supported_resolutions includes
+# "1","5","15","30","60","D","W","M"). Unlike VCI, VND supports all of these
+# server-side directly — no client resampling needed.
+INTERVAL_RESOLUTION_MAP = {
+    "1m": "1",
+    "5m": "5",
+    "15m": "15",
+    "30m": "30",
+    "1H": "60",
+    "1D": "D",
+}

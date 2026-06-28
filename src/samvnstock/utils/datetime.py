@@ -33,3 +33,18 @@ def end_of_day_timestamp(dt: datetime) -> int:
 def to_yyyymmdd(dt: datetime) -> str:
     """Format a date as VCI's `YYYYMMDD` query-param convention."""
     return dt.strftime("%Y%m%d")
+
+
+_BARS_PER_BUSINESS_DAY = {
+    "ONE_DAY": 1,
+    # VN market trading hours: 9:00-11:30 + 13:00-14:45 ~= 5 one-hour bars,
+    # 255 one-minute bars. Matches vnstock's countBack estimation.
+    "ONE_HOUR": 5,
+    "ONE_MINUTE": 255,
+}
+
+
+def estimate_bar_count(start: datetime, end: datetime, time_frame: str) -> int:
+    """Estimate VCI's `countBack` (number of bars) for a given time frame."""
+    multiplier = _BARS_PER_BUSINESS_DAY.get(time_frame, 1)
+    return count_business_days(start, end) * multiplier + 1

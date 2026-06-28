@@ -5,37 +5,42 @@ from samvnstock.core.client import HttpClient
 from samvnstock.core.exceptions import SourceError
 from samvnstock.core.models import Bar, Tick
 from samvnstock.core.normalize import remap
+from samvnstock.core.validate import filter_valid_bars
 from samvnstock.providers.base import QuoteProvider
 from samvnstock.providers.vci.const import (
     HEADERS,
+    INTERVAL_TIME_FRAME_MAP,
     INTRADAY_FIELD_MAP,
     QUOTE_HISTORY_URL,
     QUOTE_INTRADAY_URL,
-    TIME_FRAME_DAY,
 )
-from samvnstock.utils.datetime import count_business_days, end_of_day_timestamp, parse_date
+from samvnstock.utils.datetime import end_of_day_timestamp, estimate_bar_count, parse_date
 
 
 class VciQuoteProvider(QuoteProvider):
     """Quote provider backed by VCI's `chart/OHLCChart/gap-chart` and
     `market-watch/LEData/getAll` endpoints.
 
-    `history` only supports daily ("1D") bars; minute/hour intervals are a
-    future version.
+    `history` supports "1D" (default), "1H", and "1m" — these map directly to
+    VCI's native `timeFrame` values. "5m"/"15m"/"30m" would need client-side
+    resampling of 1-minute bars (not implemented here); use `source="vnd"`
+    for those, since VNDIRECT's feed supports them natively.
     """
 
     def __init__(self, client: HttpClient | None = None) -> None:
         self._client = client or HttpClient(headers=HEADERS)
 
-    def history(self, symbol: str, start: str, end: str | None = None) -> list[Bar]:
-        payload = self._build_payload(symbol, start, end)
+    def history(
+        self, symbol: str, start: str, end: str | None = None, interval: str = "1D"
+    ) -> list[Bar]:
+        payload = self._build_payload(symbol, start, end, interval)
         data = self._client.post(QUOTE_HISTORY_URL, json=payload)
         return self._parse(data, symbol)
 
     async def history_async(
-        self, symbol: str, start: str, end: str | None = None
+        self, symbol: str, start: str, end: str | None = None, interval: str = "1D"
     ) -> list[Bar]:
-        payload = self._build_payload(symbol, start, end)
+        payload = self._build_payload(symbol, start, end, interval)
         data = await self._client.apost(QUOTE_HISTORY_URL, json=payload)
         return self._parse(data, symbol)
 
@@ -49,12 +54,22 @@ class VciQuoteProvider(QuoteProvider):
         data = await self._client.apost(QUOTE_INTRADAY_URL, json=payload)
         return self._parse_intraday(data, symbol)
 
-    def _build_payload(self, symbol: str, start: str, end: str | None) -> dict[str, Any]:
+    def _build_payload(
+        self, symbol: str, start: str, end: str | None, interval: str
+    ) -> dict[str, Any]:
+        time_frame = INTERVAL_TIME_FRAME_MAP.get(interval)
+        if time_frame is None:
+            raise ValueError(
+                f"VCI không hỗ trợ trực tiếp interval '{interval}'. "
+                f"Dùng một trong {sorted(INTERVAL_TIME_FRAME_MAP)}, "
+                f"hoặc source='vnd' cho 5m/15m/30m."
+            )
+
         start_dt = parse_date(start)
         end_dt = parse_date(end) if end else datetime.now()
-        count_back = count_business_days(start_dt, end_dt) + 1
+        count_back = estimate_bar_count(start_dt, end_dt, time_frame)
         return {
-            "timeFrame": TIME_FRAME_DAY,
+            "timeFrame": time_frame,
             "symbols": [symbol],
             "to": end_of_day_timestamp(end_dt),
             "countBack": count_back,
@@ -107,4 +122,4 @@ class VciQuoteProvider(QuoteProvider):
                     volume=int(v),
                 )
             )
-        return bars
+        return filter_valid_bars(bars)

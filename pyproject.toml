@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "samvnstock"
-version = "0.4.0"
+version = "0.5.0"
 description = "Thư viện Python lấy dữ liệu chứng khoán Việt Nam, mã nguồn mở (MIT)."
 readme = "README.md"
 license = "MIT"

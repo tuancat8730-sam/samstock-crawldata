@@ -3,7 +3,42 @@
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/),
 tuân theo [Semantic Versioning](https://semver.org/lang/vi/).
 
-## [0.4.0] - Unreleased
+## [0.5.0] - Unreleased
+
+### Added
+
+- `core/validate.py`: `is_valid_bar`/`filter_valid_bars` — loại bỏ dòng OHLCV
+  vô lý (`high < low`, `high < open/close`, `low > open/close`, volume âm)
+  trước khi trả cho người dùng. Áp dụng cho cả VCI và VND `Quote.history`.
+- `utils/datetime.py`: `estimate_bar_count` — ước lượng `countBack` cho VCI
+  theo timeFrame (ONE_DAY/ONE_HOUR/ONE_MINUTE), tương tự logic vnstock.
+- `Quote.history` hỗ trợ tham số `interval`:
+  - VCI: `"1D"` (mặc định), `"1H"`, `"1m"` — map trực tiếp `timeFrame` của VCI.
+    **Không** hỗ trợ `"5m"/"15m"/"30m"` vì cần resample phía client (chưa làm).
+  - VND: `"1D"`, `"1H"`, `"30m"`, `"15m"`, `"5m"`, `"1m"` — `dchart-api` hỗ trợ
+    native cả 6 mức qua tham số `resolution`, không cần resample.
+- `api/_fallback.py`: `with_fallback`/`with_fallback_async` — chỉ retry trên
+  `SourceError`, không nuốt lỗi lập trình (`TypeError`...). Theo mục 6.4 của
+  kế hoạch, chỉ áp dụng cho dữ liệu đã chuẩn hoá (Quote), không trộn báo cáo
+  thô từ nhiều nguồn (Finance).
+- `samvnstock.quote.history(..., source="auto")`: thử `vci` trước, tự chuyển
+  sang `vnd` nếu lỗi (sync + async).
+
+### Known limitations
+
+- **Finance VND/MAS, Quote MAS chưa triển khai** (mục tiêu gốc của v0.5):
+  domain thật của VND Finance (`finfo-api.vndirect.com.vn/v3/stocks/
+  financialStatement`) đã xác nhận tồn tại qua nhiều nguồn độc lập nhưng
+  **vẫn bị chặn DNS hoàn toàn** trong môi trường phát triển hiện tại (giống
+  v0.2); tham số `modelTypes` của endpoint này là mã số nội bộ không có tài
+  liệu công khai, ngay cả các thư viện khác cũng báo thiếu chỉ tiêu khi dùng
+  — rủi ro sai cao nếu code mà không xác minh được field thật. MAS: vẫn không
+  tìm được endpoint công khai nào.
+- Phạm vi v0.5 đã thu hẹp lại theo thoả thuận với người dùng: thay Finance
+  VND/MAS bằng fallback helper + validation OHLC + mở rộng interval Quote
+  (vốn là việc bị hoãn từ v0.2).
+
+## [0.4.0] - 2026-06-28
 
 ### Added
 

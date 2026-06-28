@@ -45,9 +45,15 @@ df_groups = samvnstock.listing.symbols_by_group("VN30")  # list[str]
 df_icb = samvnstock.listing.industry()                   # mã phân ngành ICB
 df_icb_map = samvnstock.listing.symbols_by_industries()   # phân ngành theo từng mã
 
-# Lịch sử giá OHLCV theo ngày (mặc định nguồn VCI, fallback "vnd" khi VCI bị chặn IP)
+# Lịch sử giá OHLCV (mặc định nguồn VCI, interval="1D")
 df_quote = samvnstock.quote.history("VCB", start="2024-01-01", end="2024-06-30")
 df_quote_vnd = samvnstock.quote.history("VCB", start="2024-01-01", source="vnd")
+
+# interval: VCI hỗ trợ "1D"/"1H"/"1m"; VND hỗ trợ thêm "5m"/"15m"/"30m"
+df_15m = samvnstock.quote.history("VCB", start="2024-01-01", interval="15m", source="vnd")
+
+# source="auto": thử vci trước, tự chuyển sang vnd nếu lỗi
+df_auto = samvnstock.quote.history("VCB", start="2024-01-01", source="auto")
 
 # Khớp lệnh trong ngày (chỉ nguồn vci)
 df_intraday = samvnstock.quote.intraday("VCB")
@@ -107,7 +113,16 @@ và [KE-HOACH-CRAWL-DATA-CHI-TIET-1.md](./KE-HOACH-CRAWL-DATA-CHI-TIET-1.md).
       (`parent_code`) qua endpoint `metrics` — không cần chờ MAS như giả định
       ban đầu. `note` (VCI) chưa triển khai — không có trong mã nguồn mở
       vnstock để tham chiếu.
-- [ ] v0.5+ — Đa nguồn cho Finance/Quote, Trading, Market (tuỳ endpoint xác minh được)
+- [x] v0.5 — `Quote.history` hỗ trợ `interval` (VCI: 1D/1H/1m; VND: thêm
+      5m/15m/30m, native qua `dchart-api`) + validate OHLC (loại dòng vô lý)
+      + `api/_fallback.py` + `source="auto"` cho `quote.history`. **Không**
+      gồm Finance VND/MAS hay Quote MAS như kế hoạch gốc — domain VND Finance
+      xác nhận tồn tại (`finfo-api.vndirect.com.vn`) nhưng vẫn bị chặn DNS
+      trong môi trường phát triển, và tham số `modelTypes` không có tài liệu
+      công khai; MAS vẫn không có endpoint nào tìm được. Phạm vi đã thu hẹp
+      lại theo thoả thuận với người dùng — xem CHANGELOG.
+- [ ] v0.6+ — Trading (VCI: price_board), Finance VND/MAS khi có endpoint xác
+      minh được, Market
 
 ## Giấy phép & Disclaimer
 

@@ -2,5 +2,5 @@
 
 from samvnstock.api import company, financial, listing, quote
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 __all__ = ["company", "financial", "listing", "quote", "__version__"]

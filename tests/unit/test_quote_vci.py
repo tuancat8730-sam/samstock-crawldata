@@ -48,6 +48,42 @@ async def test_history_async_matches_sync_result() -> None:
     assert bars[0].open == 10.0
 
 
+@respx.mock
+def test_history_uses_one_minute_time_frame_for_1m_interval() -> None:
+    route = respx.post(QUOTE_HISTORY_URL).mock(return_value=Response(200, json=_RAW_RESPONSE))
+
+    VciQuoteProvider().history("VCB", start="2024-01-01", end="2024-01-02", interval="1m")
+
+    import json
+
+    payload = json.loads(route.calls[0].request.content)
+    assert payload["timeFrame"] == "ONE_MINUTE"
+
+
+def test_history_rejects_unsupported_interval() -> None:
+    with pytest.raises(ValueError, match="không hỗ trợ trực tiếp"):
+        VciQuoteProvider().history("VCB", start="2024-01-01", interval="5m")
+
+
+@respx.mock
+def test_history_drops_bars_with_invalid_ohlc() -> None:
+    bad_response = [
+        {
+            "t": [1704067200, 1704153600],
+            "o": [10.0, 10.5],
+            "h": [10.8, 1.0],  # second bar: high < low, invalid
+            "l": [9.9, 10.2],
+            "c": [10.5, 10.8],
+            "v": [100000, 120000],
+        }
+    ]
+    respx.post(QUOTE_HISTORY_URL).mock(return_value=Response(200, json=bad_response))
+
+    bars = VciQuoteProvider().history("VCB", start="2024-01-01", end="2024-01-02")
+
+    assert len(bars) == 1
+
+
 _INTRADAY_RESPONSE = {
     "data": [
         {"truncTime": 1704067200, "matchPrice": 10.5, "matchVol": 100, "matchType": "B"},
