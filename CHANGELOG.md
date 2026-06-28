@@ -3,7 +3,39 @@
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/),
 tuân theo [Semantic Versioning](https://semver.org/lang/vi/).
 
-## [0.3.0] - Unreleased
+## [0.4.0] - Unreleased
+
+### Added
+
+- `providers/base.py`: `FinanceProvider` ABC (`balance_sheet`, `income_statement`,
+  `cashflow`, `ratio` bắt buộc; `note`, `annual_plan` mặc định
+  `raise NotImplementedError`).
+- `providers/_shared/finance_items.py`: `VCI_RATIO_ITEM_MAP` — ~25 chỉ tiêu
+  ratio cốt lõi (P/E, P/B, ROE, ROA...), ánh xạ field thô VCI → `(item_code,
+  item_name_vi)` chuẩn hoá, mở rộng dần theo gợi ý mục 3 của kế hoạch.
+- VCI: `Finance.balance_sheet`, `.income_statement`, `.cashflow`, `.ratio` —
+  endpoint xác minh từ `thinh-vu/vnstock` (`explorer/vci/financial.py`).
+  **Phát hiện quan trọng:** VCI tự cung cấp cấu trúc cha-con (`parent` field)
+  qua endpoint `financial-statement/metrics` — không chỉ MAS có cấu trúc này
+  như giả định ban đầu trong kế hoạch; `parent_code` trong `FinancialRow` được
+  điền từ chính VCI.
+- `api/financial.py`: facade sync+async cho 4 method trên + `to_wide(df_long)`
+  pivot long-format → wide (period × item_name). Cache opt-in giống
+  `api/company.py` (key thêm `period`).
+
+### Known limitations
+
+- VCI `note` (thuyết minh BCTC) **chưa triển khai**: không có trong
+  `explorer/vci/financial.py` của vnstock để tham chiếu kiến trúc, mặc dù kế
+  hoạch gốc liệt kê là VCI có.
+- Field map `ratio()` (`VCI_RATIO_ITEM_MAP`) chỉ phủ ~25 chỉ tiêu phổ biến —
+  các trường còn lại trong response thực tế (nếu có) bị bỏ qua âm thầm; mở
+  rộng dict khi cần thêm chỉ tiêu.
+- Vẫn chưa thể live-test các endpoint `iq.vietcap.com.vn` từ môi trường phát
+  triển hiện tại (như đã ghi ở v0.3) — độ tin cậy dựa trên việc đọc mã nguồn
+  mở vnstock, chưa có integration test thật; chỉ có unit test mock (respx).
+
+## [0.3.0] - 2026-06-28
 
 ### Added
 

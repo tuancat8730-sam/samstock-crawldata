@@ -13,6 +13,13 @@ VCI_COMPANY_URL = IQ_INSIGHT_URL + "/v1/company"
 COMPANY_EVENTS_URL = IQ_INSIGHT_URL + "/v1/events"
 COMPANY_NEWS_URL = IQ_INSIGHT_URL + "/v1/news"
 
+# `section` query param accepted by `/v1/company/{symbol}/financial-statement`.
+FINANCE_SECTION_MAP = {
+    "balance_sheet": "BALANCE_SHEET",
+    "income_statement": "INCOME_STATEMENT",
+    "cashflow": "CASH_FLOW",
+}
+
 # Required so VCI's edge doesn't reject the request as non-browser traffic.
 HEADERS = {
     "Accept": "application/json, text/plain, */*",

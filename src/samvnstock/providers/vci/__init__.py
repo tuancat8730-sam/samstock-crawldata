@@ -1,10 +1,17 @@
 from samvnstock.core.registry import ProviderRegistry
 from samvnstock.providers.vci.company import VciCompanyProvider
+from samvnstock.providers.vci.finance import VciFinanceProvider
 from samvnstock.providers.vci.listing import VciListingProvider
 from samvnstock.providers.vci.quote import VciQuoteProvider
 
 ProviderRegistry.register("listing", "vci", VciListingProvider)
 ProviderRegistry.register("quote", "vci", VciQuoteProvider)
 ProviderRegistry.register("company", "vci", VciCompanyProvider)
+ProviderRegistry.register("financial", "vci", VciFinanceProvider)
 
-__all__ = ["VciCompanyProvider", "VciListingProvider", "VciQuoteProvider"]
+__all__ = [
+    "VciCompanyProvider",
+    "VciFinanceProvider",
+    "VciListingProvider",
+    "VciQuoteProvider",
+]

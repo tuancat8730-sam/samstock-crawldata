@@ -126,3 +126,55 @@ class CompanyProvider(ABC):
 
     async def ratio_summary_async(self, symbol: str) -> list[FinancialRow]:
         raise NotImplementedError
+
+
+class FinanceProvider(ABC):
+    """Interface every financial-report source (VCI, ...) must implement.
+
+    All rows are returned in long format (`FinancialRow`) so different
+    sources' wildly different report shapes (VCI flat, MAS parent/child, ...)
+    can share one model — see [[KE-HOACH-CRAWL-DATA-CHI-TIET-1]] section 2.
+
+    `note` (VCI thuyết minh BCTC) and `annual_plan` (MAS-only) are not part
+    of the required contract since not every source has them.
+    """
+
+    @abstractmethod
+    def balance_sheet(self, symbol: str, period: str = "quarter") -> list[FinancialRow]: ...
+
+    @abstractmethod
+    async def balance_sheet_async(
+        self, symbol: str, period: str = "quarter"
+    ) -> list[FinancialRow]: ...
+
+    @abstractmethod
+    def income_statement(self, symbol: str, period: str = "quarter") -> list[FinancialRow]: ...
+
+    @abstractmethod
+    async def income_statement_async(
+        self, symbol: str, period: str = "quarter"
+    ) -> list[FinancialRow]: ...
+
+    @abstractmethod
+    def cashflow(self, symbol: str, period: str = "quarter") -> list[FinancialRow]: ...
+
+    @abstractmethod
+    async def cashflow_async(self, symbol: str, period: str = "quarter") -> list[FinancialRow]: ...
+
+    @abstractmethod
+    def ratio(self, symbol: str, period: str = "quarter") -> list[FinancialRow]: ...
+
+    @abstractmethod
+    async def ratio_async(self, symbol: str, period: str = "quarter") -> list[FinancialRow]: ...
+
+    def note(self, symbol: str, period: str = "quarter") -> list[FinancialRow]:
+        raise NotImplementedError
+
+    async def note_async(self, symbol: str, period: str = "quarter") -> list[FinancialRow]:
+        raise NotImplementedError
+
+    def annual_plan(self, symbol: str) -> list[FinancialRow]:
+        raise NotImplementedError
+
+    async def annual_plan_async(self, symbol: str) -> list[FinancialRow]:
+        raise NotImplementedError

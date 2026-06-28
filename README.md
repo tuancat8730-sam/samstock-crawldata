@@ -68,6 +68,16 @@ df_ratio = samvnstock.company.ratio_summary("VCB")  # long-format: item_name, va
 # overview/shareholders/officers/subsidiaries/ratio_summary hỗ trợ cache đĩa
 # (ít đổi -> cache 24h), opt-in qua use_cache=True
 df_overview_cached = samvnstock.company.overview("VCB", use_cache=True)
+
+# Báo cáo tài chính, dạng long-format (symbol, statement, period, item_code,
+# item_name, value, parent_code) — period="quarter" (mặc định) hoặc "year"
+df_bs = samvnstock.financial.balance_sheet("VCB", period="quarter")
+df_is = samvnstock.financial.income_statement("VCB", period="year")
+df_cf = samvnstock.financial.cashflow("VCB")
+df_ratio = samvnstock.financial.ratio("VCB")  # P/E, P/B, ROE, ROA...
+
+# Pivot long -> wide (period theo hàng, item_name theo cột)
+df_bs_wide = samvnstock.financial.to_wide(df_bs)
 ```
 
 Nguồn dữ liệu hiện hỗ trợ: `vci` (mặc định, đầy đủ nhất), `vnd` (chỉ
@@ -92,7 +102,11 @@ và [KE-HOACH-CRAWL-DATA-CHI-TIET-1.md](./KE-HOACH-CRAWL-DATA-CHI-TIET-1.md).
       `subsidiaries`, `events`, `news`, `ratio_summary`) + `core/cache.py`
       (parquet, TTL, opt-in qua `use_cache=True`). `events`/`news` dùng field map
       best-effort — xem CHANGELOG "Known limitations".
-- [ ] v0.4 — Finance (VCI: balance_sheet/income_statement/cashflow/ratio, long-format)
+- [x] v0.4 — Finance (VCI: `balance_sheet`, `income_statement`, `cashflow`,
+      `ratio`, long-format) + `to_wide()`. VCI tự có cấu trúc cha-con
+      (`parent_code`) qua endpoint `metrics` — không cần chờ MAS như giả định
+      ban đầu. `note` (VCI) chưa triển khai — không có trong mã nguồn mở
+      vnstock để tham chiếu.
 - [ ] v0.5+ — Đa nguồn cho Finance/Quote, Trading, Market (tuỳ endpoint xác minh được)
 
 ## Giấy phép & Disclaimer
