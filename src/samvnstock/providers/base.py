@@ -1,6 +1,19 @@
 from abc import ABC, abstractmethod
 
-from samvnstock.core.models import Bar, Industry, Symbol, SymbolIndustry, Tick
+from samvnstock.core.models import (
+    Bar,
+    CompanyEvent,
+    CompanyOverview,
+    FinancialRow,
+    Industry,
+    NewsItem,
+    Officer,
+    Shareholder,
+    Subsidiary,
+    Symbol,
+    SymbolIndustry,
+    Tick,
+)
 
 
 class ListingProvider(ABC):
@@ -62,4 +75,54 @@ class QuoteProvider(ABC):
         raise NotImplementedError
 
     async def intraday_async(self, symbol: str, page_size: int = 100) -> list[Tick]:
+        raise NotImplementedError
+
+
+class CompanyProvider(ABC):
+    """Interface every company-profile source (VCI, ...) must implement.
+
+    Only `overview` is mandatory; the other methods raise
+    `NotImplementedError` by default for sources that don't support them.
+    """
+
+    @abstractmethod
+    def overview(self, symbol: str) -> CompanyOverview: ...
+
+    @abstractmethod
+    async def overview_async(self, symbol: str) -> CompanyOverview: ...
+
+    def shareholders(self, symbol: str) -> list[Shareholder]:
+        raise NotImplementedError
+
+    async def shareholders_async(self, symbol: str) -> list[Shareholder]:
+        raise NotImplementedError
+
+    def officers(self, symbol: str) -> list[Officer]:
+        raise NotImplementedError
+
+    async def officers_async(self, symbol: str) -> list[Officer]:
+        raise NotImplementedError
+
+    def subsidiaries(self, symbol: str) -> list[Subsidiary]:
+        raise NotImplementedError
+
+    async def subsidiaries_async(self, symbol: str) -> list[Subsidiary]:
+        raise NotImplementedError
+
+    def events(self, symbol: str) -> list[CompanyEvent]:
+        raise NotImplementedError
+
+    async def events_async(self, symbol: str) -> list[CompanyEvent]:
+        raise NotImplementedError
+
+    def news(self, symbol: str) -> list[NewsItem]:
+        raise NotImplementedError
+
+    async def news_async(self, symbol: str) -> list[NewsItem]:
+        raise NotImplementedError
+
+    def ratio_summary(self, symbol: str) -> list[FinancialRow]:
+        raise NotImplementedError
+
+    async def ratio_summary_async(self, symbol: str) -> list[FinancialRow]:
         raise NotImplementedError

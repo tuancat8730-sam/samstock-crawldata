@@ -55,6 +55,19 @@ df_intraday = samvnstock.quote.intraday("VCB")
 # Bản async tương đương cho mọi hàm trên, hậu tố "_async"
 df_symbols = await samvnstock.listing.all_symbols_async()
 df_quote = await samvnstock.quote.history_async("VCB", start="2024-01-01")
+
+# Hồ sơ doanh nghiệp (chỉ nguồn vci)
+df_overview = samvnstock.company.overview("VCB")
+df_shareholders = samvnstock.company.shareholders("VCB")
+df_officers = samvnstock.company.officers("VCB")
+df_subsidiaries = samvnstock.company.subsidiaries("VCB")
+df_events = samvnstock.company.events("VCB")
+df_news = samvnstock.company.news("VCB")
+df_ratio = samvnstock.company.ratio_summary("VCB")  # long-format: item_name, value
+
+# overview/shareholders/officers/subsidiaries/ratio_summary hỗ trợ cache đĩa
+# (ít đổi -> cache 24h), opt-in qua use_cache=True
+df_overview_cached = samvnstock.company.overview("VCB", use_cache=True)
 ```
 
 Nguồn dữ liệu hiện hỗ trợ: `vci` (mặc định, đầy đủ nhất), `vnd` (chỉ
@@ -75,7 +88,10 @@ và [KE-HOACH-CRAWL-DATA-CHI-TIET-1.md](./KE-HOACH-CRAWL-DATA-CHI-TIET-1.md).
       endpoint này chỉ có trong tài liệu sản phẩm trả phí "Vnstock_data", không có
       trong mã nguồn mở hay API công khai nào tôi xác minh được; cần thêm thông tin
       trước khi triển khai để tránh code suy đoán không hoạt động thật.
-- [ ] v0.3 — Company profile (VCI) + `core/cache.py`
+- [x] v0.3 — Company profile (VCI: `overview`, `shareholders`, `officers`,
+      `subsidiaries`, `events`, `news`, `ratio_summary`) + `core/cache.py`
+      (parquet, TTL, opt-in qua `use_cache=True`). `events`/`news` dùng field map
+      best-effort — xem CHANGELOG "Known limitations".
 - [ ] v0.4 — Finance (VCI: balance_sheet/income_statement/cashflow/ratio, long-format)
 - [ ] v0.5+ — Đa nguồn cho Finance/Quote, Trading, Market (tuỳ endpoint xác minh được)
 

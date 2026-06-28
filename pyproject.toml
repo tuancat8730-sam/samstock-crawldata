@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "samvnstock"
-version = "0.2.0"
+version = "0.3.0"
 description = "Thư viện Python lấy dữ liệu chứng khoán Việt Nam, mã nguồn mở (MIT)."
 readme = "README.md"
 license = "MIT"
@@ -25,6 +25,7 @@ classifiers = [
 dependencies = [
   "httpx>=0.27",
   "pandas>=2.0",
+  "pyarrow>=16.0",
   "pydantic>=2.0",
 ]
 

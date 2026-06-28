@@ -9,6 +9,10 @@ SYMBOLS_BY_INDUSTRIES_URL = IQ_INSIGHT_URL + "/v2/company/search-bar"
 QUOTE_HISTORY_URL = BASE_URL + "chart/OHLCChart/gap-chart"
 QUOTE_INTRADAY_URL = BASE_URL + "market-watch/LEData/getAll"
 
+VCI_COMPANY_URL = IQ_INSIGHT_URL + "/v1/company"
+COMPANY_EVENTS_URL = IQ_INSIGHT_URL + "/v1/events"
+COMPANY_NEWS_URL = IQ_INSIGHT_URL + "/v1/news"
+
 # Required so VCI's edge doesn't reject the request as non-browser traffic.
 HEADERS = {
     "Accept": "application/json, text/plain, */*",

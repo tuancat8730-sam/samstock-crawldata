@@ -3,7 +3,37 @@
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.0.0/),
 tuân theo [Semantic Versioning](https://semver.org/lang/vi/).
 
-## [0.2.0] - Unreleased
+## [0.3.0] - Unreleased
+
+### Added
+
+- `core/cache.py`: `ParquetCache` — cache parquet trên đĩa theo khoá
+  `(kind, source, symbol, params)`, có TTL (mặc định 24h, lưu tại
+  `~/.cache/samvnstock`). Áp dụng cho `api/company.py` qua tham số
+  `use_cache=True` (opt-in, chỉ ở bản sync).
+- `core/models.py`: `CompanyOverview`, `Shareholder`, `Officer`, `Subsidiary`,
+  `CompanyEvent`, `NewsItem`, `FinancialRow` (long-format — dùng chung cho
+  Company.ratio_summary và Finance ở v0.4).
+- `providers/base.py`: `CompanyProvider` ABC (chỉ `overview` là bắt buộc).
+- VCI: `Company.overview`, `.shareholders`, `.officers`, `.subsidiaries`,
+  `.events`, `.news`, `.ratio_summary` — endpoint xác minh từ mã nguồn mở
+  `thinh-vu/vnstock` (`explorer/vci/company.py`).
+- `api/company.py`: facade cho toàn bộ method trên (sync + async).
+
+### Known limitations
+
+- `events`/`news`: tên trường tiêu đề (`event_title`, `title`) là **best-effort**
+  — chính `vnstock` cũng không chuẩn hoá cứng các trường này (chỉ generic
+  camelCase→snake_case + drop một số cột), nên tên trường thật của VCI cho các
+  endpoint này chưa được xác minh 100%. Nếu dữ liệu trả về sai/thiếu, cần mẫu
+  response thật để sửa field map trong `providers/vci/company.py`.
+- Không thể live-test trực tiếp các endpoint `iq.vietcap.com.vn` (bao gồm
+  Company) từ môi trường phát triển hiện tại — bị trả 403 khi gọi không có
+  header browser-like đầy đủ (qua WebFetch). Endpoint được tin dùng dựa trên
+  việc tham chiếu mã nguồn mở vnstock, không phải gọi thử trực tiếp; test ở
+  mức unit (respx mock), chưa có integration test thật.
+
+## [0.2.0] - 2026-06-28
 
 ### Added
 

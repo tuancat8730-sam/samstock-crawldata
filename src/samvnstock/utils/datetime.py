@@ -28,3 +28,8 @@ def count_business_days(start: datetime, end: datetime) -> int:
 def end_of_day_timestamp(dt: datetime) -> int:
     """Unix timestamp for the end of the given day, matching VCI's `to` param."""
     return int((dt + timedelta(days=1)).timestamp())
+
+
+def to_yyyymmdd(dt: datetime) -> str:
+    """Format a date as VCI's `YYYYMMDD` query-param convention."""
+    return dt.strftime("%Y%m%d")
